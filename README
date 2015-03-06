@@ -1,0 +1,154 @@
+University of Hawaii
+EE 367L
+Lab:  Ethernet Simulator Part 1
+
+INTRODUCTION
+
+This is a simulator of two host nodes and a network
+manager.  The manager is the parent process and the
+host nodes are children processes.
+
+INITIALIZATION
+
+The program initially creates links between hosts
+and connections between the manager and hosts.
+These connections are configured and then two child 
+processes are created for the hosts.
+Then unnecessary connections are closed.
+
+HOST
+
+Each host has
+- A main directory to access files
+- Physical ID, that doesn't change over time
+- Network address, that could be changed.  Initially,
+    it's equal to the physical ID
+- Network address of the node it's connected.  
+    Currently, this isn't used (not sure if we'll need it)
+- linkin and linkout which is the incoming and outgoing
+    links to another node (in this case, the other host)
+- A connection to the network manager
+- A packet buffer to send packets
+- A packet buffer to receive packets
+- Some flags to indicate if elements are valid and/or new
+
+The host goes through an infinite loop where on every
+pass, it 
+
+- Checks if the manager has sent a command for
+    something to do.  If there is a command then it
+    executes the command.  The discussion of the MANAGER
+    below gives the types of commands sent by the manager.
+
+- Checks if there is a packet on the incoming to download
+    to its receive packet buffer.  Before downloading
+    it checks if doesn't already have a new packet in
+    its receive packet buffer.  If there's still a new
+    packet then it doesn't overwrite the existing packet,
+    and the incoming packet is lost.
+
+- Goes to sleep for 10 milliseconds.  
+
+MANAGER
+
+The manager responds to user commands which the user enters 
+from the console.  The manager goes through a loop of 
+getting a command and then executing it.  It also goes to 
+sleep for 10 milliseconds on every pass through the loop.
+
+The manager is conneected to the hosts, with direct connectios 
+to each host.  It can select the host it wants to talk to.  
+The user can work through the manager to
+  - List all the hosts
+  - Change the current host
+
+The manager can command the host to do certain
+operations:
+  - Display the state of the host
+  - Change the main directory of the host
+  - Change the network address of the host
+  - Have the host upload a file into its send
+      packet buffer
+  - Have the host download the payload of the
+      receive packet buffer into a file
+  - Have the host transmit the packet in the
+      receive packet buffer (to the other host)
+  - Clear the host's receive packet buffer 
+
+The manager sends commands to the host.  The host executes 
+the commands, and sends back a reply.
+
+  - To display the state of the host, the
+    manager will send to the host the message
+    "GetHostState".  The host send a reply
+    message with the first word "GetHostStateAck"
+    followed by the state information.
+
+  - To change the main directory of the host,
+    the manager will send to the host the
+    message "SetMainDir <directory name>",
+    where <directory name> is the name of
+    the new directory.  The host will send
+    the reply "DISPLAY <message>", where
+    <message> is to be displayed on the user's
+    console.
+
+The following are the possible command messages
+from the manager and replies from the host.
+
+Set Network Address:
+  Manager "SetNetAddr <network address>-> Host  
+  Manager <- "DISPLAY <message from host> Host  
+
+Set Main Directory:
+  Manager "SetMainDir <directory name>-> Host  
+  Manager <- "DISPLAY <message from host> Host  
+
+Clear Receive Packet Buffer:
+  Manager "ClearRcvFlg"-> Host  
+  Manager <- "DISPLAY <message from host> Host  
+
+Upload Packet From File To Send Packet Buffer:
+  Manager "UploadPacket <file name>"-> Host  
+  Manager <- "DISPLAY <message from host> Host  
+
+Download Packet From Receive Packet Buffer To File:
+  Manager "DownloadPacket <file name>"-> Host  
+  Manager <- "DISPLAY <message from host> Host  
+
+Transmit Packet From Send Packet Buffer:
+  Manager "TransmitPacket"-> Host  
+  Manager <- "DISPLAY <message from host> Host  
+
+Get Host's State:
+  Manager "GetHostState"-> Host  
+  Manager <- "GetHostStateAck <list of state values> Host  
+
+**** Files of the Program ****
+
+man.c, man.h:  Files for the manager.
+
+host.c, host.h: Files for the host.
+
+net.c, net.h:  Configures connections and links at 
+    the beginning of the program.
+
+link.c, link.h:  Implements the links between nodes.
+    Currently, they are implemented using pipes.
+
+utilities.c utilities.h:  Utility programs such
+   as converting ascii to integer, and vice versa;
+   finding words in character strings; appending
+   words together to form messages, etc. 
+
+Also in the directory are two subdirectories 
+TestDir0 and TestDir1 for testing.  They contain
+small messages that you can send between hosts.
+
+There's also some test code I left in which you can
+ignore:
+* testlink.c was used to test links.  
+* SampleCode has a small program to test the system 
+    call usleep(), which puts a process to sleep for 
+    a certain number of microseconds.
+
