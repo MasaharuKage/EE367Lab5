@@ -15,6 +15,9 @@ typedef struct { /* State of host */
    managerLink manLink;       /* Connection to the manager */
    LinkInfo linkin;           /* Incoming communication link */
    LinkInfo linkout;          /* Outgoing communication link */
+
+   /* Added */
+   int rcvflag;
 } hostState;
 
 void hostMain(hostState * hstate);
