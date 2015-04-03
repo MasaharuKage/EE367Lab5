@@ -39,6 +39,7 @@
 #include "link.h"
 #include "man.h"
 #include "host.h"
+#include "switch.h"
 
 #define EMPTY_ADDR  0xffff  /* Indicates that the empty address */
                              /* It also indicates that the broadcast address */
@@ -127,12 +128,18 @@ close(manLinkArray->link[hostid].toHost[PIPEWRITE]);
  * just two links between two hosts
  */
 
-void netSetNetworkTopology(linkArrayType * linkArray)
+void netSetNetworkTopology(linkArrayType * linkArray, int src[], int dst[])
 {
-linkArray->link[0].uniPipeInfo.physIdSrc = 0;
-linkArray->link[0].uniPipeInfo.physIdDst = 1;
-linkArray->link[1].uniPipeInfo.physIdSrc = 1;
-linkArray->link[1].uniPipeInfo.physIdDst = 0;
+	int i = 0;
+	int j = 0;
+	for(i = 0; i < linkArray->numlinks; i += 2)
+	{
+		linkArray->link[i].uniPipeInfo.physIdSrc = src[j];
+		linkArray->link[i].uniPipeInfo.physIdDst = dst[j];
+		linkArray->link[i+1].uniPipeInfo.physIdSrc = dst[j];
+		linkArray->link[i+1].uniPipeInfo.physIdDst = src[j];
+		j++;
+	}
 }
 
 /*
@@ -212,4 +219,57 @@ for (i=0; i<manLinkArray->numlinks; i++) {
 }
 }
 
+void netCloseAllManLinks(manLinkArrayType *manLinkArray)
+{
+	int i = 0;
 
+	/* Close all manager links */
+	for(i = 0; i < manLinkArray->numlinks; i++)
+	{
+		close(manLinkArray->link[i].toHost[0]);
+		close(manLinkArray->link[i].toHost[1]);
+		close(manLinkArray->link[i].fromHost[0]);
+		close(manLinkArray->link[i].fromHost[1]);
+	}
+}
+
+void netSwitchLinks(linkArrayType *linkArray, switchState *switchS, 
+			int switchID)
+{
+	int i = 0;
+	
+	/* Switch Links */
+	for(i = 0; i < linkArray->numlinks; i++)
+	{
+		/* Source Match */
+		if(linkArray->link[i].uniPipeInfo.physIdSrc == switchID)
+		{
+			switchS->link_O[switchS->Osize] = linkArray->link[i];
+			switchS->Osize++;
+		}
+		/* Destination Match */
+		if(linkArray->link[i].uniPipeInfo.physIdDst == switchID)
+		{
+			switchS->link_I[switchS->Isize] = linkArray->link[i];
+			switchS->Isize++;
+		}
+	}
+}
+
+void netCloseSwitchOtherLinks(linkArrayType *linkArray, int hostid)
+{
+	int i = 0;
+
+	/* Close */
+	for(i = 0; i <linkArray->numlinks; i++)
+	{
+		if(linkArray->link[i].uniPipeInfo.physIdSrc != hostid)
+		{
+			close(linkArray->link[i].uniPipeInfo.fd[PIPEWRITE]);
+		}
+		if(linkArray->link[i].uniPipeInfo.physIdDst != hostid)
+		{
+			close(linkArray->link[i].uniPipeInfo.fd[PIPEREAD]);
+		}
+	}
+}

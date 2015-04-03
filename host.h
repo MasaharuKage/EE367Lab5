@@ -1,8 +1,12 @@
 /* 
  * host.h 
  */
+#ifndef HOST_H_
+#define HOST_H_
 
 #define NAME_LENGTH 100 
+
+#include "databuff.h"
 
 typedef struct { /* State of host */
    int   physid;              /* physical id */
@@ -18,9 +22,12 @@ typedef struct { /* State of host */
 
    /* Added */
    int rcvflag;
+   DataBuff sendbuff;
+   DataBuff rcvbuff;
 } hostState;
 
 void hostMain(hostState * hstate);
 
 void hostInit(hostState * hstate, int physid);
 
+#endif
