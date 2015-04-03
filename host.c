@@ -446,13 +446,13 @@ void hostUploadPacket(hostState * hstate, char fname[], char replymsg[])
    		return;
 	}
 
-	length = fread(tempbuff, 1, PAYLOAD_LENGTH+1, fp);
+	length = fread(tempbuff, 1, MAX_DATA_LENGTH+1, fp);
 
 	if (length==0) {
    		strcpy(replymsg, "Upload aborted: error in reading the file");
   		return;
 	}
-	else if (length > PAYLOAD_LENGTH) {
+	else if (length > MAX_DATA_LENGTH) {
 		strcpy(replymsg, "Upload aborted: file is too big");
    		return;
 	}
@@ -460,13 +460,12 @@ void hostUploadPacket(hostState * hstate, char fname[], char replymsg[])
 	tempbuff[length] = '\0';
 
 	/* Fill in send packet buffer */
-
-	hstate->sendPacketBuff.valid=1;
-	hstate->sendPacketBuff.length=length;
+	hstate->sendbuff.valid = 1;
+	hstate->sendbuff.length = length;
 
 	memset(hstate->sendbuff.data,0,sizeof(hstate->sendbuff.data));
 	for (i=0; i<length; i++) { /* Store tempbuff in payload of packet buffer */
-	   	hstate->sendPacketBuff.payload[i] = tempbuff[i];
+	   	hstate->sendbuff.data[i] = tempbuff[i];
 	}
 
 	/* Message to the manager */
@@ -499,7 +498,7 @@ char path[MAXBUFFER];  /* Path to the file */
 
 /* Create a path to the file and then open it */
 
-if (hstate->rcvPacketBuff.valid == 0) {
+if (hstate->rcvbuff.valid == 0) {
    strcpy(replymsg, "Download aborted: the receive packet buffer is empty");
    return;
 }
